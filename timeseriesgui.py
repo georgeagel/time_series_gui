@@ -39,7 +39,7 @@ from StaticDataFrame import StaticDataFrame
 from myframes.plot_frame import plot_frame
 from myframes.stationarity_frame import stationarity_frame
 from myframes.decompose_frame import decomposition_frame
-
+from myframes.autocorr_frame import autocorr_frame
 
 
 #we create two frames for the transform df window
@@ -50,7 +50,7 @@ class transform_datekey_frame(tk.Frame):
         
         self.parent= parent
         self.df = StaticDataFrame.get_dataframe()
-
+        
         tk.Frame.__init__(self, parent)
         
         self.optionvariable = StringVar(self)
@@ -64,7 +64,7 @@ class transform_datekey_frame(tk.Frame):
             print(column_list)
         else:
             return
-                        
+                   
         self.numerical_option = OptionMenu(self, self.optionvariable, *column_list)
         
         self.numerical_option.grid(row = 1, column = 1)
@@ -188,22 +188,30 @@ class WindowTS(tk.Frame):
         self.menubar.add_command(label = "Plot Time Series", command = self.pop_plot_window)
         self.menubar.add_command(label = "TestStationarity", command = self.pop_stationarity_window)
         self.menubar.add_command(label = "TrendSeasonal Decomposition", command = self.pop_tsldecompose_window)
-
+        self.menubar.add_command(label = "ACF PACF functions",command = self.pop_autocorr)
         #self.menubar.add_command(label="Quit!", command=self.parent.quit)
         #self.menubar.add_command(label="MachineLearning", command=self.machine_learning_window)
         self.parent.config(menu = self.menubar )
         #self.menubar.grid(row = 0 , column = 0 )
          
 
+
+    def pop_autocorr(self):
+        self.top_autocorr = tk.Toplevel(self.parent)
+        if(StaticDataFrame.loaded_csv == True):
+            self.autocorr_frame = autocorr_frame(self.top_autocorr,StaticDataFrame.df)
+            self.autocorr_frame.grid(row = 0 , column = 0 , pady = (10,10))
+
+            
     #tsl decompose window in tkinter
     #creates a top level with tsl decompose plots and tests
-
     def pop_tsldecompose_window(self):
         self.top_decompose= tk.Toplevel(self.parent)
         if(StaticDataFrame.loaded_csv==True):
             self.decomposition_frame = decomposition_frame(self.top_decompose,StaticDataFrame.df)
             self.decomposition_frame.grid(row = 0 , column = 0 , pady=(10,10))
-            
+
+
 
     #stationarity window tkinter 
     #creates a top level with stationarity plots and tests

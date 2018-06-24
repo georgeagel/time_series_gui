@@ -36,25 +36,6 @@ from tkinter import *
 import matplotlib.dates as dates
 from StaticDataFrame import StaticDataFrame 
     
-#plot object superclass
-class plot_object_super(object):
-    def __init__(self,window ,df_,column_name,grid_list,title  = 'A plot',figsize = (5,5)):
-        self.window = window
-        self.df = df_
-        self.grid_list = grid_list
-        self.figsize = figsize
-        self.title = title
-        self.current_plot = None
-        self.canvas = None
-
-        #self.plot(column_name)
-
-    #returns plot object
-    def get_plot_object(self):
-        if(self.canvas != None):
-            return self.canvas
-        else:
-            return None
 
 
 #creates a plot data frame
@@ -90,9 +71,9 @@ class plot_frame(tk.Frame):
             label.grid(row = 15, column = 1)
             #print('PLOT_FUNCTION')
             plt_objct = plot_object(self,StaticDataFrame.df,self.variable.get(),(25,1),'A simple PLot',figsize = (4,5))
-            #roll_objct = plot_object(self,StaticDataFrame.df,self.variable.get(),(25,150),'ROlling Mean 2 window ',figsize=(4,5))
+            roll_objct = plot_object(self,StaticDataFrame.df,self.variable.get(),(25,150),'ROlling Mean 2 window ',figsize=(4,5))
 
-
+            
             self.current_plot = plt_objct.get_plot_object()
             #if(tkagg_plot_object!=None):
             #    tkagg_plot_object.destroy()
@@ -109,95 +90,70 @@ class plot_frame(tk.Frame):
 
                 
 
-# #creates time series object python
-# class plot_object:
-#     def __init__(self,  window,df_,column_name,grid_list,title  = 'A plot',figsize = (5,5)):
-#         self.window = window
-#         self.df = df_
-#         self.grid_list = grid_list
-#         self.figsize = figsize
-#         self.title = title
-#         self.current_plot = None
-#         self.canvas = None
-
-#         #self.box = Entry(window)
-#         #self.button = Button (window, text="check", command=self.plot)
-#         #self.box.pack ()
-#         self.plot(column_name)
-#         #self.button.pack()
-    
-#     def get_plot_object(self):
-#         if(self.canvas != None):
-#             return self.canvas
-#         else:
-#             return None
-#     def plot (self,column_name):  
-#         #self.remove_plot()
-
-#         try:
-            
-#             fig = Figure(self.figsize)
-#             plt.tight_layout()
-#             a = fig.add_subplot(111)
-#             self.df.plot( y = column_name,ax= a,title = self.title)
-
-#             #new_x = dates.num2date(df_['date'])
-#             #a
-#             #lol =1
-#             #a.plot(lol1, lol2, color = 'red')
-#             #a.plot(p, range(2 +max(x)),color='blue')
-           
-#             #a.set_title ("Estimation Grid", fontsize=16)
-#             #a.set_ylabel("Y", fontsize=14)
-#             #a.set_xlabel("X", fontsize=1
-#             self.canvas = FigureCanvasTkAgg(fig, master=self.window)
-#             self.canvas.get_tk_widget().grid(row = self.grid_list[0], column= self.grid_list[1])
-#             self.canvas = self.canvas.get_tk_widget()
-            
-            
-#             #self.canvas.draw()
-#         except Exception as e:
-#             print('message___1123')
-#             exc_type, exc_obj, exc_tb = sys.exc_info()
-#             print(e.__doc__,str(exc_obj),exc_tb.tb_lineno)
-#             #print(e.message)      
-            
-
-
-
-
-
 #creates time series object python
-class plot_object(plot_object_super):
+class plot_object:
     def __init__(self,  window,df_,column_name,grid_list,title  = 'A plot',figsize = (5,5)):
-        super(plot_object, self).__init__(window,df_,column_name,grid_list,title,figsize)
+        self.window = window
+        self.df = df_
+        self.grid_list = grid_list
+        self.figsize = figsize
+        self.title = title
+        self.current_plot = None
+        self.canvas = None
 
+        #self.box = Entry(window)
+        #self.button = Button (window, text="check", command=self.plot)
+        #self.box.pack ()
         self.plot(column_name)
+        #self.button.pack()
+    
+    def get_plot_object(self):
+        if(self.canvas != None):
+            return self.canvas
+        else:
+            return None
+    def plot (self,column_name):  
+        #self.remove_plot()
 
-    # def get_plot_object(self):
-    #     if(self.canvas != None):
-    #         return self.canvas
-    #     else:
-    #         return None
-
-    #plots_stuff    
-    def plot(self,column_name):  
         try:
+            
             fig = Figure(self.figsize)
             plt.tight_layout()
             a = fig.add_subplot(111)
             self.df.plot( y = column_name,ax= a,title = self.title)
-            
+
+            #new_x = dates.num2date(df_['date'])
+            #a
+            #lol =1
+            #a.plot(lol1, lol2, color = 'red')
+            #a.plot(p, range(2 +max(x)),color='blue')
+           
+            #a.set_title ("Estimation Grid", fontsize=16)
+            #a.set_ylabel("Y", fontsize=14)
+            #a.set_xlabel("X", fontsize=1
             self.canvas = FigureCanvasTkAgg(fig, master=self.window)
             self.canvas.get_tk_widget().grid(row = self.grid_list[0], column= self.grid_list[1])
             self.canvas = self.canvas.get_tk_widget()
             
+            
+            #self.canvas.draw()
         except Exception as e:
             print('message___1123')
             exc_type, exc_obj, exc_tb = sys.exc_info()
             print(e.__doc__,str(exc_obj),exc_tb.tb_lineno)
             #print(e.message)      
             
+
+
+
+
+
+
+
+
+
+
+
 
 
 

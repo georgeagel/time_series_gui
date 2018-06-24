@@ -46,17 +46,15 @@ class transform_categorical_frame(tk.Frame):
             print(column_list)
         else:
             return
-                
-        
+                    
         self.numerical_option = OptionMenu(self, self.optionvariable, *column_list)
         
         self.numerical_option.grid(row = 60, column = 1)
-        
+            
         self.entries = []
         
         self.transform_numerical_columns = tk.Button(self, text = "TransformCategorical", command = self.transform_categorical,bg="lightblue")
         self.transform_numerical_columns.grid(row =5,column = 1 )
-        
         self.add_button = tk.Button(self, text = "Substract Categorical columns", command = self.remove_last_from_list,bg = "yellow")
         self.add_button.grid(row =65,column = 1)
         self.add_button = tk.Button(self, text = "Append Categorical columns", command = self.addToListNumeric,bg = "yellow")

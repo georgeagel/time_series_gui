@@ -9,7 +9,7 @@ import matplotlib.dates as dates
 from myframes.categorical_frame import transform_categorical_frame
 from myframes.numeric_frame import transform_numeric_frame
 from statsmodels.tsa.stattools import adfuller
-
+from statsmodels.tsa.stattools import pacf
 import pandas as pd 
 import numpy as np
 import re
@@ -47,7 +47,6 @@ from abc import ABC, abstractmethod
 #
 
 
-
 class plot_object_super(object):
     def __init__(self,window ,df_,column_name,grid_list,title  = 'A plot',figsize = (5,5)):
         self.window = window
@@ -71,14 +70,15 @@ class plot_object_super(object):
 
 #creates a plot data frame
 #for stationarity of dataframe 
-class stationarity_frame(tk.Frame):
+class autocorr_frame(tk.Frame):
     def __init__(self,parent,df):
         self.parent= parent
         tk.Frame.__init__(self, parent)  
         self.variable = StringVar(self)
-        self.rolling_window_var = StringVar(self)
-        self.rolling_window_var.set('5')
-        self.df =df 
+        self.lags_var = StringVar(self)
+
+        self.lags_var.set('50')
+        self.df = df
         self.current_plot = None
         #self.scrollbar = Scrollbar(self)
         #self.scrollbar.grid(row = 0 , column = 100)
@@ -90,7 +90,7 @@ class stationarity_frame(tk.Frame):
             
             vcmd = (self.register(self.rollingWindowValidation), '%S')
 
-            self.select_window = Entry(self,textvariable = self.rolling_window_var, width = 5, validate = 'key', vcmd = vcmd)
+            self.select_window = Entry(self,textvariable = self.lags_var, width = 5, validate = 'key', vcmd = vcmd)
 
 
             self.select_window.grid(row = 5, column = 5 )
@@ -106,7 +106,7 @@ class stationarity_frame(tk.Frame):
             return True
         #bell(self) 
         return False       
-
+    
     def plot_function(self):
         try:
             if(self.current_plot!=None):
@@ -122,42 +122,16 @@ class stationarity_frame(tk.Frame):
             self.frame_of_plots = tk.Frame(self)
             self.frame_of_plots.grid(row = 25, column = 1)
 
-            self.subframe_of_plots = tk.Frame(self.frame_of_plots)
-            self.subframe_of_plots2 = tk.Frame(self.frame_of_plots)
-            self.subframe_of_plots.pack(side = tk.TOP)
-            self.subframe_of_plots2.pack(side = tk.BOTTOM)
-
-            self.frame_of_document = tk.Frame(self)
-            self.frame_of_document.grid(row = 25,column = 100)
 
 
-            plt_objct = rolling_plot_object(self.subframe_of_plots,StaticDataFrame.df,self.variable.get(),self.rolling_window_var.get(),tk.LEFT,'Rolling mean plot',figsize = (3,3),rolling_type_s = "mean")
-            plt_objct_median = rolling_plot_object(self.subframe_of_plots,StaticDataFrame.df,self.variable.get(),self.rolling_window_var.get(),tk.RIGHT,'Rolling median plot',figsize = (3,3),rolling_type_s = "median")
-            plt_objct_std = rolling_plot_object(self.subframe_of_plots2,StaticDataFrame.df,self.variable.get(),self.rolling_window_var.get(),tk.LEFT,'Rolling std plot',figsize = (3,3),rolling_type_s = "std")
-            #result_adfuller = adfuller(self.df[self.variable.get()])
-            self.text_result_adfuller = self.text_result_adfuller = tk.Text(self.frame_of_document, wrap=WORD, width=35, height= 40)
+            plt_objct = acf_plot(self.frame_of_plots,StaticDataFrame.df,self.variable.get(),self.lags_var.get(),tk.LEFT,'ACF plot',figsize = (3,3),type_s = 'acf')
+            plt_objct = acf_plot(self.frame_of_plots,StaticDataFrame.df,self.variable.get(),self.lags_var.get(),tk.RIGHT,'PACF plot',figsize = (3, 3),type_s = 'pacf')
+            #plt_objct_median = rolling_plot_object(self.subframe_of_plots,StaticDataFrame.df,self.variable.get(),self.rolling_window_var.get(),tk.RIGHT,'Rolling median plot',figsize = (3,3))
+            #plt_objct_std = rolling_plot_object(self.subframe_of_plots2,StaticDataFrame.df,self.variable.get(),self.rolling_window_var.get(),tk.LEFT,'Rolling std plot',figsize = (3,3)
 
-            dftest = adfuller(self.df[self.variable.get()], autolag='AIC')
-            dfoutput = pd.Series(dftest[0:4], index=['Test Statistic','p-value','#Lags Used','Number of Observations Used'])
-            for key,value in dftest[4].items():
-                dfoutput['Critical Value (%s)'%key] = value
-            document_text = str(dfoutput)
-            self.text_result_adfuller.insert(INSERT,document_text)            
+                       
             
-            #self.entry_result_adfuller = tk.Entry(self)
-            #self.text_result_adfuller.insert(INSERT,result_adfuller)
-            self.text_result_adfuller.pack(side = tk.BOTTOM)
-
-
-            self.label_result_adfuller = tk.Label(self.frame_of_document,text = "Adfuller Test results")
-            self.label_result_adfuller.pack(side = tk.TOP)
-            
-
-            #self.entry_result_adfuller.grid(row = 25,column = 100)
-            #self.entry_result_adfuller.insert(0,result_adfuller)
-
-            #roll_objct = plot_object(self,StaticDataFrame.df,self.variable.get(),(25,150),'ROlling Mean 2 window ',figsize=(4,5))  
-
+         
             self.current_plot = plt_objct.get_plot_object()
             #if(tkagg_plot_object!=None):
             #    tkagg_plot_object.destroy()
@@ -177,16 +151,15 @@ class stationarity_frame(tk.Frame):
 
 
 #rolling plot object in python
-class rolling_plot_object(plot_object_super):
-    def __init__(self,  window,df_,column_name,window_rolling_int,pack_coords,title  = 'A plot',figsize = (5,5),rolling_type_s= 'mean'):
-        super(rolling_plot_object, self).__init__(window,df_,column_name,pack_coords,title,figsize)            
-        self.window_rolling_int = window_rolling_int
+class acf_plot(plot_object_super):
+    def __init__(self,  window,df_,column_name,lags_int,pack_coords,title  = 'A plot',figsize = (5,5),type_s= 'acf'):
+        super(acf_plot, self).__init__(window,df_,column_name,pack_coords,title,figsize)            
+        self.lags_int = lags_int
 
-        print('lol'+str(self.window_rolling_int))
-        self.rolling_type_str = rolling_type_s
-        self.plot_rolling(column_name)
+        print('lol'+str(self.lags_int))
+        self.type_s = type_s
+        self.plot_acf(column_name)
 
-    
     
     def get_plot_object(self):
         if(self.canvas != None):
@@ -195,25 +168,21 @@ class rolling_plot_object(plot_object_super):
             return None
 
     #plots rolling mean example
-    def plot_rolling(self,column_name):  
+    def plot_acf(self,column_name):  
         #self.remove_plot()
         try:  
             fig = Figure(self.figsize)
             plt.tight_layout()
             a = fig.add_subplot(111)
-            self.df_rolling = self.df
 
-            if(self.rolling_type_str == 'mean'):
-                self.rolling_column = self.df_rolling.rolling(int(self.window_rolling_int)).mean().fillna(0)
-            elif(self.rolling_type_str == 'median'):
-                self.rolling_column = self.df_rolling.rolling(int(self.window_rolling_int)).median().fillna(0)
-            elif(self.rolling_type_str == 'std'):   
-                self.rolling_column = self.df_rolling.rolling(int(self.window_rolling_int)).std().fillna(0)
-                print('run deep run high')
-            else:
-                self.rolling_column = self.df_rolling.rolling(int(self.window_rolling_int)).mean().fillna(0)
-            #self.rolling_column= self.df_rolling.rolling(int(self.window_rolling_int)).mean().fillna(0)
-            self.rolling_column.plot( y  = column_name,ax= a,title = self.title)  
+            if(self.type_s== 'acf'):
+                self.acf_custom = get_acf_custom(self.df,column_name,int(self.lags_int),5)
+            elif(self.type_s == 'pacf'):
+                self.acf_custom = get_pacf_custom(self.df,column_name,int(self.lags_int),5)
+            #self.acf_custom.plot(x = 'lag',y = 'value')
+            
+
+            self.acf_custom.plot( y  = 'value',ax= a,title = self.title)  
 
 
             self.canvas = FigureCanvasTkAgg(fig, master=self.window)
@@ -229,6 +198,38 @@ class rolling_plot_object(plot_object_super):
             print(e.__doc__,str(exc_obj),exc_tb.tb_lineno)
             #print(e.message) 
 
+
+
 #we want to make the validation entry to get only numerical values
 #OK ? ????? ?? ??? ? ? ? ? ? ? 
+
+
+#acf get function
+def get_acf_custom(df,column,lags = 100,step = 5):
     
+    correlations_list = []
+    
+    for i in range(1, lags, step ):
+        lol1= df[column][1:-i]
+        lol2 = df[column][i+1:]
+        correlations_list.append([i,np.corrcoef(lol1,lol2)[0][1]])     
+    correlation_pandas = pd.DataFrame(correlations_list,columns = {'lag':0, 'value':1})
+    correlation_pandas = correlation_pandas.set_index('lag')
+    return correlation_pandas 
+
+
+#pacf function
+def get_pacf_custom(df,column,lags = 100,step = 5):
+    
+    correlations_list = []
+    
+    #for i in range(1, lags, step ):
+    acf_x = pacf(df['precipitation'], nlags=100)
+    for i,j in enumerate(acf_x):
+        
+        correlations_list.append([i,j])
+    
+      
+    correlation_pandas = pd.DataFrame(correlations_list,columns = {'lag':0, 'value':1})
+    correlation_pandas = correlation_pandas.set_index('lag')
+    return correlation_pandas 
